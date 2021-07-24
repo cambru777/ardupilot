@@ -952,6 +952,9 @@ private:
 #else
     ModeStabilize mode_stabilize;
 #endif
+#if MODE_LIFTER_ENABLED == ENABLED
+    ModeLifter mode_lifter;
+#endif
 #if MODE_SPORT_ENABLED == ENABLED
     ModeSport mode_sport;
 #endif
