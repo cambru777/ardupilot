@@ -168,6 +168,7 @@ public:
         float ground_speed;                 ///< ground speed in m/sec
         float ground_course;                ///< ground course in degrees
         float gps_yaw;                      ///< GPS derived yaw information, if available (degrees)
+        uint32_t gps_yaw_time_ms;           ///< timestamp of last GPS yaw reading
         bool  gps_yaw_configured;           ///< GPS is configured to provide yaw
         uint16_t hdop;                      ///< horizontal dilution of precision in cm
         uint16_t vdop;                      ///< vertical dilution of precision in cm
@@ -328,21 +329,9 @@ public:
     }
 
     // yaw in degrees if available
-    bool gps_yaw_deg(uint8_t instance, float &yaw_deg, float &accuracy_deg) const {
-        if (!have_gps_yaw(instance)) {
-            return false;
-        }
-        yaw_deg = state[instance].gps_yaw;
-        if (state[instance].have_gps_yaw_accuracy) {
-            accuracy_deg = state[instance].gps_yaw_accuracy;
-        } else {
-            // fall back to 10 degrees as a generic default
-            accuracy_deg = 10;
-        }
-        return true;
-    }
-    bool gps_yaw_deg(float &yaw_deg, float &accuracy_deg) const {
-        return gps_yaw_deg(primary_instance, yaw_deg, accuracy_deg);
+    bool gps_yaw_deg(uint8_t instance, float &yaw_deg, float &accuracy_deg, uint32_t &time_ms) const;
+    bool gps_yaw_deg(float &yaw_deg, float &accuracy_deg, uint32_t &time_ms) const {
+        return gps_yaw_deg(primary_instance, yaw_deg, accuracy_deg, time_ms);
     }
 
     // number of locked satellites
@@ -443,14 +432,6 @@ public:
 
     // return a 3D vector defining the offset of the GPS antenna in meters relative to the body frame origin
     const Vector3f &get_antenna_offset(uint8_t instance) const;
-
-    // set position for HIL
-    void setHIL(uint8_t instance, GPS_Status status, uint64_t time_epoch_ms,
-                const Location &location, const Vector3f &velocity, uint8_t num_sats,
-                uint16_t hdop);
-
-    // set accuracy for HIL
-    void setHIL_Accuracy(uint8_t instance, float vdop, float hacc, float vacc, float sacc, bool _have_vertical_velocity, uint32_t sample_ms);
 
     // lock out a GPS port, allowing another application to use the port
     void lock_port(uint8_t instance, bool locked);

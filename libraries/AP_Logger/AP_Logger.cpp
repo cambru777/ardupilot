@@ -60,7 +60,6 @@ const AP_Param::GroupInfo AP_Logger::var_info[] = {
     // @Param: _BACKEND_TYPE
     // @DisplayName: AP_Logger Backend Storage type
     // @Description: Bitmap of what Logger backend types to enable. Block-based logging is available on SITL and boards with dataflash chips. Multiple backends can be selected.
-    // @Values: 0:None,1:File,2:MAVLink,3:File and MAVLink,4:Block,6:Block and MAVLink
     // @Bitmask: 0:File,1:MAVLink,2:Block
     // @User: Standard
     AP_GROUPINFO("_BACKEND_TYPE",  0, AP_Logger, _params.backend_types,       uint8_t(HAL_LOGGING_BACKENDS_DEFAULT)),
@@ -92,12 +91,14 @@ const AP_Param::GroupInfo AP_Logger::var_info[] = {
     // @User: Standard
     AP_GROUPINFO("_FILE_DSRMROT",  4, AP_Logger, _params.file_disarm_rot,       0),
 
+#if HAL_LOGGING_MAVLINK_ENABLED
     // @Param: _MAV_BUFSIZE
     // @DisplayName: Maximum AP_Logger MAVLink Backend buffer size
     // @Description: Maximum amount of memory to allocate to AP_Logger-over-mavlink
     // @User: Advanced
     // @Units: kB
     AP_GROUPINFO("_MAV_BUFSIZE",  5, AP_Logger, _params.mav_bufsize,       HAL_LOGGING_MAV_BUFSIZE),
+#endif
 
     // @Param: _FILE_TIMEOUT
     // @DisplayName: Timeout before giving up on file writes
@@ -136,7 +137,7 @@ void AP_Logger::Init(const struct LogStructure *structures, uint8_t num_types)
     _params.file_bufsize.convert_parameter_width(AP_PARAM_INT8);
 
     if (hal.util->was_watchdog_armed()) {
-        gcs().send_text(MAV_SEVERITY_INFO, "Forcing logging for watchdog reset");
+        GCS_SEND_TEXT(MAV_SEVERITY_INFO, "Forcing logging for watchdog reset");
         _params.log_disarmed.set(1);
     }
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
@@ -833,7 +834,9 @@ void AP_Logger::handle_mavlink_msg(GCS_MAVLINK &link, const mavlink_message_t &m
 }
 
 void AP_Logger::periodic_tasks() {
+#ifndef HAL_BUILD_AP_PERIPH
     handle_log_send();
+#endif
     FOR_EACH_BACKEND(periodic_tasks());
 }
 
